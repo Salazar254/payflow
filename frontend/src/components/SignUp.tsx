@@ -6,13 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 
-export function Login() {
+export function SignUp() {
     const navigate = useNavigate()
     const { login } = useAuth()
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
     const [formData, setFormData] = useState({
+        name: '',
+        business: '',
         email: '',
+        phone: '',
         password: ''
     })
 
@@ -26,7 +29,7 @@ export function Login() {
         setIsLoading(true)
 
         try {
-            const response = await fetch('http://localhost:3000/api/login', {
+            const response = await fetch('http://localhost:3000/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
@@ -38,7 +41,7 @@ export function Login() {
                 login(data.token, data.merchantId)
                 navigate('/dashboard')
             } else {
-                setError(data.message || 'Invalid email or password')
+                setError(data.message || 'Registration failed')
             }
         } catch (err) {
             setError('Failed to connect to server')
@@ -50,10 +53,10 @@ export function Login() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
             {/* Background Effects */}
-            <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>
-            <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>
 
-            <Card className="w-full max-w-md border-white/5 bg-slate-900/40 backdrop-blur-xl shadow-2xl z-10">
+            <Card className="w-full max-w-lg border-white/5 bg-slate-900/40 backdrop-blur-xl shadow-2xl z-10">
                 <CardHeader className="space-y-1 text-center">
                     <div className="flex items-center justify-center mb-6">
                         <span className="text-2xl font-bold tracking-tight text-white">
@@ -61,14 +64,29 @@ export function Login() {
                         </span>
                     </div>
                     <CardTitle className="text-2xl font-bold text-white">
-                        Welcome back
+                        Create an account
                     </CardTitle>
                     <CardDescription className="text-slate-400">
-                        Sign in to your dashboard
+                        Start accepting instant M-Pesa payments today
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name" className="text-slate-300">Full Name</Label>
+                                <Input id="name" name="name" placeholder="John Doe" required
+                                    className="bg-slate-950/50 border-slate-700 text-white placeholder:text-slate-500 focus:ring-indigo-500 focus:border-indigo-500"
+                                    onChange={handleChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="business" className="text-slate-300">Business Name</Label>
+                                <Input id="business" name="business" placeholder="John's Shop" required
+                                    className="bg-slate-950/50 border-slate-700 text-white placeholder:text-slate-500 focus:ring-indigo-500 focus:border-indigo-500"
+                                    onChange={handleChange} />
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="email" className="text-slate-300">Email</Label>
                             <Input id="email" name="email" type="email" placeholder="john@example.com" required
@@ -77,10 +95,14 @@ export function Login() {
                         </div>
 
                         <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="password" className="text-slate-300">Password</Label>
-                                <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300">Forgot password?</a>
-                            </div>
+                            <Label htmlFor="phone" className="text-slate-300">Phone Number</Label>
+                            <Input id="phone" name="phone" type="tel" placeholder="0712345678" required
+                                className="bg-slate-950/50 border-slate-700 text-white placeholder:text-slate-500 focus:ring-indigo-500 focus:border-indigo-500"
+                                onChange={handleChange} />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="password" className="text-slate-300">Password</Label>
                             <Input id="password" name="password" type="password" required
                                 className="bg-slate-950/50 border-slate-700 text-white placeholder:text-slate-500 focus:ring-indigo-500 focus:border-indigo-500"
                                 onChange={handleChange} />
@@ -94,13 +116,13 @@ export function Login() {
 
                         <Button type="submit" disabled={isLoading}
                             className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-6 shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all">
-                            {isLoading ? 'Signing In...' : 'Sign In'}
+                            {isLoading ? 'Creating Account...' : 'Get Started'}
                         </Button>
 
                         <div className="text-center text-sm text-slate-400 mt-4">
-                            Don't have an account?{' '}
-                            <Link to="/signup" className="text-indigo-400 hover:text-indigo-300 font-medium hover:underline">
-                                Create one
+                            Already have an account?{' '}
+                            <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium hover:underline">
+                                Sign in
                             </Link>
                         </div>
                     </form>

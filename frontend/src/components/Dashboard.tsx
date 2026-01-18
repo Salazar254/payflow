@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { LogOut, RefreshCw } from 'lucide-react'
+import { RefreshCw, TrendingUp, Users, DollarSign } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 interface Transaction {
     id: string
@@ -12,12 +13,8 @@ interface Transaction {
     timestamp: string
 }
 
-interface DashboardProps {
-    apiKey: string
-    onLogout: () => void
-}
-
-export function Dashboard({ apiKey, onLogout }: DashboardProps) {
+export function Dashboard() {
+    const { user } = useAuth()
     const [transactions, setTransactions] = useState<Transaction[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [stats, setStats] = useState({
@@ -27,11 +24,13 @@ export function Dashboard({ apiKey, onLogout }: DashboardProps) {
     })
 
     const fetchTransactions = async () => {
+        if (!user) return
+
         setIsLoading(true)
         try {
             const response = await fetch('http://localhost:3000/api/transactions', {
                 headers: {
-                    'x-api-key': apiKey,
+                    'x-api-key': user.merchantId, // Using merchantId as key for MVP compatibility
                 },
             })
             const data = await response.json()
@@ -62,7 +61,7 @@ export function Dashboard({ apiKey, onLogout }: DashboardProps) {
         const interval = setInterval(fetchTransactions, 5000) // Poll every 5 seconds
         return () => clearInterval(interval)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [apiKey])
+    }, [user])
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-KE', {
@@ -79,119 +78,121 @@ export function Dashboard({ apiKey, onLogout }: DashboardProps) {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-8">
-            <div className="max-w-7xl mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-4xl font-bold text-white">
-                            PayFlow Dashboard
-                        </h1>
-                        <p className="text-slate-400 mt-1">Instant M-Pesa Settlement Platform</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={fetchTransactions}
-                            className="border-slate-600 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400"
-                            aria-label="Refresh transactions"
-                        >
-                            <RefreshCw className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={onLogout}
-                            className="border-slate-600 bg-red-600/20 hover:bg-red-600/30 text-red-400"
-                        >
-                            <LogOut className="h-4 w-4 mr-2" />
-                            Logout
-                        </Button>
-                    </div>
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold text-white">Overview</h2>
+                    <p className="text-slate-400 mt-1">Welcome back, {user?.name || 'Customer'}</p>
                 </div>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={fetchTransactions}
+                    className="border-slate-700 bg-slate-800/50 hover:bg-slate-800 text-slate-300"
+                >
+                    <RefreshCw className="h-4 w-4" />
+                </Button>
+            </div>
 
-                {/* Stats Cards */}
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="border-blue-500/30 bg-blue-500/10 backdrop-blur">
-                        <CardHeader className="pb-2">
-                            <CardDescription className="text-slate-300">Total Transactions</CardDescription>
-                            <CardTitle className="text-3xl text-white">{stats.totalTransactions}</CardTitle>
-                        </CardHeader>
-                    </Card>
-                    <Card className="border-cyan-500/30 bg-cyan-500/10 backdrop-blur">
-                        <CardHeader className="pb-2">
-                            <CardDescription className="text-slate-300">Total Amount</CardDescription>
-                            <CardTitle className="text-3xl text-white">{formatCurrency(stats.totalAmount)}</CardTitle>
-                        </CardHeader>
-                    </Card>
-                    <Card className="border-green-500/30 bg-green-500/10 backdrop-blur">
-                        <CardHeader className="pb-2">
-                            <CardDescription className="text-slate-300">Success Rate</CardDescription>
-                            <CardTitle className="text-3xl text-white">
-                                {stats.totalTransactions > 0
-                                    ? Math.round((stats.successfulTransactions / stats.totalTransactions) * 100)
-                                    : 0}
-                                %
-                            </CardTitle>
-                        </CardHeader>
-                    </Card>
-                </div>
-
-                {/* Transactions Table */}
-                <Card className="border-slate-700 bg-slate-800/50 backdrop-blur">
-                    <CardHeader>
-                        <CardTitle className="text-white">Recent Transactions</CardTitle>
-                        <CardDescription className="text-slate-300">
-                            Real-time transaction updates
-                        </CardDescription>
+            {/* Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-3">
+                <Card className="border-indigo-500/20 bg-indigo-500/5 backdrop-blur-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-slate-300">Total Revenue</CardTitle>
+                        <DollarSign className="h-4 w-4 text-indigo-400" />
                     </CardHeader>
                     <CardContent>
-                        {isLoading ? (
-                            <div className="text-center py-8 text-slate-400">Loading transactions...</div>
-                        ) : transactions.length === 0 ? (
-                            <div className="text-center py-8 text-slate-400">No transactions yet</div>
-                        ) : (
+                        <div className="text-2xl font-bold text-white">{formatCurrency(stats.totalAmount)}</div>
+                        <p className="text-xs text-slate-400 mt-1">+20.1% from last month</p>
+                    </CardContent>
+                </Card>
+                <Card className="border-purple-500/20 bg-purple-500/5 backdrop-blur-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-slate-300">Transactions</CardTitle>
+                        <Users className="h-4 w-4 text-purple-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-white">{stats.totalTransactions}</div>
+                        <p className="text-xs text-slate-400 mt-1">
+                            {stats.successfulTransactions} successful
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card className="border-emerald-500/20 bg-emerald-500/5 backdrop-blur-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-slate-300">Success Rate</CardTitle>
+                        <TrendingUp className="h-4 w-4 text-emerald-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-white">
+                            {stats.totalTransactions > 0
+                                ? Math.round((stats.successfulTransactions / stats.totalTransactions) * 100)
+                                : 0}%
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">+2% from last week</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Transactions Table */}
+            <Card className="border-white/5 bg-slate-900/40 backdrop-blur-sm">
+                <CardHeader>
+                    <CardTitle className="text-white">Recent Transactions</CardTitle>
+                    <CardDescription className="text-slate-400">
+                        Real-time transaction updates from your payment links.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {isLoading ? (
+                        <div className="text-center py-8 text-slate-500">Loading transactions...</div>
+                    ) : transactions.length === 0 ? (
+                        <div className="text-center py-12 text-slate-500">
+                            No transactions yet. Create a payment link to get started!
+                        </div>
+                    ) : (
+                        <div className="rounded-md border border-slate-800">
                             <Table>
-                                <TableHeader>
-                                    <TableRow className="border-slate-700 hover:bg-slate-700/50">
-                                        <TableHead className="text-slate-300">Transaction ID</TableHead>
-                                        <TableHead className="text-slate-300">Phone Number</TableHead>
-                                        <TableHead className="text-slate-300">Amount</TableHead>
-                                        <TableHead className="text-slate-300">Status</TableHead>
-                                        <TableHead className="text-slate-300">Date</TableHead>
+                                <TableHeader className="bg-slate-950/50">
+                                    <TableRow className="border-slate-800 hover:bg-transparent">
+                                        <TableHead className="text-slate-400">Status</TableHead>
+                                        <TableHead className="text-slate-400">Amount</TableHead>
+                                        <TableHead className="text-slate-400">Phone</TableHead>
+                                        <TableHead className="text-slate-400 text-right">Date</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {transactions.map((transaction) => (
-                                        <TableRow key={transaction.id} className="border-slate-700 hover:bg-slate-700/50">
-                                            <TableCell className="font-mono text-sm text-slate-300">
-                                                {transaction.id.slice(0, 8)}...
-                                            </TableCell>
-                                            <TableCell className="text-slate-300">{transaction.phone}</TableCell>
-                                            <TableCell className="font-semibold text-white">
-                                                {formatCurrency(transaction.amount)}
-                                            </TableCell>
+                                        <TableRow key={transaction.id} className="border-slate-800 hover:bg-slate-800/30">
                                             <TableCell>
                                                 <span
                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${transaction.status === 'completed'
-                                                            ? 'bg-green-900/50 text-green-300'
+                                                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                                             : transaction.status === 'pending'
-                                                                ? 'bg-yellow-900/50 text-yellow-300'
-                                                                : 'bg-red-900/50 text-red-300'
+                                                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                                                : 'bg-red-500/10 text-red-400 border border-red-500/20'
                                                         }`}
                                                 >
-                                                    {transaction.status}
+                                                    {transaction.status === 'completed' ? 'Success' : transaction.status}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-slate-300">{formatDate(transaction.timestamp)}</TableCell>
+                                            <TableCell className="font-medium text-white">
+                                                {formatCurrency(transaction.amount)}
+                                            </TableCell>
+                                            <TableCell className="text-slate-400 font-mono text-xs">
+                                                {transaction.phone}
+                                            </TableCell>
+                                            <TableCell className="text-slate-400 text-right">
+                                                {formatDate(transaction.timestamp)}
+                                            </TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
                             </Table>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     )
 }
+
