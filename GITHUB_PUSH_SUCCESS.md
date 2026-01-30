@@ -245,7 +245,7 @@ You now have a **complete, production-grade FX rate-locking platform** ready for
 
 ---
 
-**Commit**: `1d94244`  
+**Commit**: `5833243`  
 **Branch**: `main`  
 **Date**: 2026-01-30  
 **Files**: 35+  
