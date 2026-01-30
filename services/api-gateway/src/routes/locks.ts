@@ -1,9 +1,9 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { z } from 'zod';
 import { db } from '../server';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
-import { ethers } from 'ethers';
+// ethers removed as it was unused in this route
 
 const router = Router();
 
@@ -19,7 +19,7 @@ const createLockSchema = z.object({
 // ============================================================================
 router.post('/create', authenticate, async (req: AuthRequest, res: Response) => {
     try {
-        const { quoteId, usdAmount, lockType } = createLockSchema.parse(req.body);
+        const { quoteId, usdAmount, lockType } = createLockSchema.parse((req as any).body);
         const userId = req.userId;
 
         // Verify quote exists and is valid
@@ -71,7 +71,7 @@ router.post('/create', authenticate, async (req: AuthRequest, res: Response) => 
             '30day': 30 * 24 * 60 * 60 * 1000,
         };
 
-        const expiresAt = new Date(Date.now() + lockDurations[lockType]);
+        const expiresAt = new Date(Date.now() + lockDurations[lockType as keyof typeof lockDurations]);
 
         // Create lock in database
         const result = await db.query(
@@ -236,7 +236,7 @@ router.get('/user/:userId', authenticate, async (req: AuthRequest, res: Response
         res.json({
             success: true,
             data: {
-                locks: result.rows.map(lock => ({
+                locks: result.rows.map((lock: any) => ({
                     lockId: lock.lock_id,
                     usdAmount: parseFloat(lock.usd_amount),
                     kesRequired: parseFloat(lock.kes_required),
@@ -271,7 +271,7 @@ router.get('/user/:userId', authenticate, async (req: AuthRequest, res: Response
 router.post('/:lockId/execute', authenticate, async (req: AuthRequest, res: Response) => {
     try {
         const { lockId } = req.params;
-        const { phoneNumber } = req.body;
+        const { phoneNumber } = (req as any).body;
         const userId = req.userId;
 
         if (!phoneNumber) {
@@ -328,7 +328,7 @@ router.post('/:lockId/execute', authenticate, async (req: AuthRequest, res: Resp
                 instructions: 'Please check your phone for M-Pesa prompt',
             },
         });
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error executing lock:', error);
         res.status(500).json({
             success: false,
@@ -372,7 +372,7 @@ router.post('/:lockId/cancel', authenticate, async (req: AuthRequest, res: Respo
                 cancelledAt: result.rows[0].cancelled_at,
             },
         });
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error cancelling lock:', error);
         res.status(500).json({
             success: false,

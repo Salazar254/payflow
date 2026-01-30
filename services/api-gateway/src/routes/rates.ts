@@ -1,13 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { redisClient } from '../server';
-import { calculateQuote } from '../../rate-engine/src/index';
+import { db, redisClient } from '../server';
+import { calculateQuote } from '../utils/rate-logic';
 
 const router = Router();
 
 // ============================================================================
 // GET CURRENT RATES
 // ============================================================================
-router.get('/current', async (req: Request, res: Response) => {
+router.get('/current', async (_req: any, res: Response) => {
     try {
         // Try to get from cache first
         const cached = await redisClient.get('current_rates');
@@ -163,7 +163,7 @@ router.get('/history', async (req: Request, res: Response) => {
             success: true,
             data: {
                 period,
-                points: result.rows.map(row => ({
+                points: result.rows.map((row: any) => ({
                     timestamp: row.bucket,
                     avgRate: parseFloat(row.avg_rate),
                     minRate: parseFloat(row.min_rate),

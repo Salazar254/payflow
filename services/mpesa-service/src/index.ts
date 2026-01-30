@@ -183,6 +183,12 @@ app.post('/api/v1/mpesa/initiate', async (req: Request, res: Response) => {
 
         console.log('STK Push initiated:', stkResponse);
 
+        // Store CheckoutRequestID in DB to map callback later
+        await db.query(
+            'UPDATE locks SET mpesa_checkout_request_id = $1 WHERE lock_id = $2',
+            [stkResponse.CheckoutRequestID, lockId]
+        );
+
         res.json({
             success: true,
             message: 'Payment request sent to your phone',
@@ -225,8 +231,18 @@ app.post('/webhooks/mpesa/callback', async (req: Request, res: Response) => {
             const mpesaReceiptNumber = metadata.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value;
             const phoneNumber = metadata.find((item: any) => item.Name === 'PhoneNumber')?.Value;
 
-            // The account reference should contain the lockId
-            const lockId = callback.CheckoutRequestID; // This should be mapped properly
+            // Look up internal lockId from database using CheckoutRequestID
+            const lockLookup = await db.query(
+                'SELECT lock_id FROM locks WHERE mpesa_checkout_request_id = $1',
+                [callback.CheckoutRequestID]
+            );
+
+            if (lockLookup.rows.length === 0) {
+                console.error('Lock not found for CheckoutRequestID:', callback.CheckoutRequestID);
+                return res.status(200).send('OK');
+            }
+
+            const lockId = lockLookup.rows[0].lock_id;
 
             console.log('Payment successful:', {
                 lockId,
